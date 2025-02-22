@@ -89,3 +89,9 @@ Temporary Items
 
 # SSL-related directories
 .well-known
+
+# Ignore all .text files in config directory
+config/*.txt
+
+# Ignore all files inside logs directory
+logs/*
