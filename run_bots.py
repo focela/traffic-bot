@@ -1,12 +1,13 @@
 import os
 import time
 import random
+import threading
 from utils.logger import log_message
 
 
 def run_bot(bot_name: str, script_name: str) -> None:
     """
-    Execute a bot script and log its execution status.
+    Execute a bot script in a separate thread and log its execution status.
 
     Args:
         bot_name (str): The display name of the bot.
@@ -19,7 +20,7 @@ def run_bot(bot_name: str, script_name: str) -> None:
 
 def main():
     """
-    Main function to sequentially execute all bots with a random delay of 1-5 minutes between each.
+    Main function to execute 15 bots concurrently.
     """
     bots = [
         ("Google Traffic Bot", "google_traffic.py"),
@@ -27,16 +28,20 @@ def main():
         ("AdSense Click Bot", "adsense_click.py")
     ]
 
-    for bot_name, script_name in bots:
-        run_bot(bot_name, script_name)
+    num_threads = 15
+    threads = []
 
-        # Add a delay of 1-5 minutes between each bot execution
-        if bot_name != "AdSense Click Bot":
-            delay = random.randint(60, 300)
-            log_message(f"⏳ Waiting {delay // 60} minutes before running the next bot...")
-            time.sleep(delay)
+    for _ in range(num_threads):
+        for bot_name, script_name in bots:
+            thread = threading.Thread(target=run_bot, args=(bot_name, script_name))
+            threads.append(thread)
+            thread.start()
+            time.sleep(random.uniform(0.5, 2))
 
-    log_message("✅ Completed execution of all bots!")
+    for thread in threads:
+        thread.join()
+
+    log_message("🚀 All 15 bots have completed execution!")
 
 
 if __name__ == "__main__":
