@@ -19,7 +19,7 @@ def run_bot(bot_name: str, script_name: str) -> None:
 
 def main():
     """
-    Main function to sequentially execute all bots with random delays in an infinite loop.
+    Main function to sequentially execute all bots with a random delay of 1-5 minutes between each.
     """
     bots = [
         ("Google Traffic Bot", "google_traffic.py"),
@@ -27,20 +27,16 @@ def main():
         ("AdSense Click Bot", "adsense_click.py")
     ]
 
-    while True:
-        for bot_name, script_name in bots:
-            run_bot(bot_name, script_name)
+    for bot_name, script_name in bots:
+        run_bot(bot_name, script_name)
 
-            # Add delay between bot executions except for the last bot
-            if bot_name != "AdSense Click Bot":
-                delay = random.randint(300, 600)
-                log_message(f"⏳ Waiting {delay // 60} minutes before running the next bot...")
-                time.sleep(delay)
+        # Add a delay of 1-5 minutes between each bot execution
+        if bot_name != "AdSense Click Bot":
+            delay = random.randint(60, 300)
+            log_message(f"⏳ Waiting {delay // 60} minutes before running the next bot...")
+            time.sleep(delay)
 
-        # Wait before restarting the loop
-        loop_delay = random.randint(600, 900)
-        log_message(f"🔄 Restarting the bot loop in {loop_delay // 60} minutes...")
-        time.sleep(loop_delay)
+    log_message("✅ Completed execution of all bots!")
 
 
 if __name__ == "__main__":
