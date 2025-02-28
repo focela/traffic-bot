@@ -16,7 +16,7 @@ from typing import Dict, Union, List, Optional
 class ProxyHandler:
     """Handles proxy configuration and management for web automation bots."""
 
-    def __init__(self, proxy_config_path: str = "data/proxies.json"):
+    def __init__(self, proxy_config_path: str = "configs/proxies.json"):
         """
         Initialize the ProxyHandler with a path to proxy configuration.
 
