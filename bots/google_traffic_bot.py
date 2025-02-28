@@ -1,37 +1,48 @@
-import time
-import sys
-import os
-# Ensure the correct system path is set for module resolution
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from proxy_manager.proxy_handler import get_proxy
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+from proxy_manager.proxy_handler import get_proxy, create_proxy_extension
 from utils.logger import log_message
 
 proxy = get_proxy("google_bot")
+proxy_extension = create_proxy_extension(proxy)
 
-options = Options()
-options.add_argument(f'--proxy-server={proxy}')
-options.add_argument("--headless")
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
 
-driver = webdriver.Chrome(options=options)
+# Load the proxy authentication extension
+chrome_options.add_extension(proxy_extension)
+
+# Use WebDriverManager for automatic ChromeDriver updates
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
 
 def run():
-    log_message("google_traffic_bot", "Starting bot...")
+    log_message("google_traffic_bot", f"Starting bot with proxy: {proxy}")
     driver.get("https://www.google.com/")
-    time.sleep(3)
-    search_box = driver.find_element("name", "q")
-    search_box.send_keys("AWS automation using Selenium")
-    search_box.submit()
-    time.sleep(5)
-    results = driver.find_elements("css selector", "h3")
-    if results:
-        results[0].click()
-        log_message("google_traffic_bot", "Clicked search result")
-        time.sleep(10)
-    driver.quit()
+
+    try:
+        search_box = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "q"))
+        )
+        search_box.send_keys("AWS automation using Selenium")
+        search_box.submit()
+        log_message("google_traffic_bot", "Search executed successfully")
+    except Exception as e:
+        log_message("google_traffic_bot", f"Error: {str(e)}")
+    finally:
+        time.sleep(5)
+        driver.quit()
+
 
 if __name__ == "__main__":
     run()
