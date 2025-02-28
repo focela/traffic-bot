@@ -95,3 +95,4 @@ config/*.txt
 
 # Ignore all files inside logs directory
 logs/*
+proxy_auth_plugin.zip

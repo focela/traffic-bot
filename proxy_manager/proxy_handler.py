@@ -6,11 +6,10 @@ select appropriate proxies based on bot names, and create Chrome extensions for 
 """
 
 import json
-import os
 import random
 import urllib.parse
 import zipfile
-from typing import Dict, Union, List, Optional
+from typing import Dict
 
 
 class ProxyHandler:
@@ -46,6 +45,9 @@ class ProxyHandler:
         """
         Get a proxy URL for the specified bot.
 
+        If the bot name ends with a numeric suffix (e.g., google_bot_1),
+        it will extract the base name (google_bot) and use its proxy_pool.
+
         Args:
             bot_name: Name of the bot to get proxy for
 
@@ -57,19 +59,46 @@ class ProxyHandler:
         """
         proxies = self.load_proxies()
 
-        if bot_name not in proxies:
-            raise KeyError(f"Bot name '{bot_name}' not found in proxy configuration")
+        # Check if bot_name contains a numeric suffix
+        parts = bot_name.split('_')
+        base_name = None
 
-        bot_config = proxies[bot_name]
+        # If the last part is numeric, remove it to get the base name
+        if len(parts) > 1 and parts[-1].isdigit():
+            base_name = '_'.join(parts[:-1])
 
-        # Return static proxy if configured
-        if "proxy" in bot_config:
-            return bot_config["proxy"]
-        # Otherwise return a random proxy from the pool
-        elif "proxy_pool" in bot_config and bot_config["proxy_pool"]:
-            return random.choice(bot_config["proxy_pool"])
-        else:
-            raise ValueError(f"No valid proxy configuration found for bot '{bot_name}'")
+        # First try with the exact bot name
+        if bot_name in proxies:
+            bot_config = proxies[bot_name]
+
+            # Return static proxy if configured
+            if "proxy" in bot_config:
+                return bot_config["proxy"]
+            # Otherwise return a random proxy from the pool
+            elif "proxy_pool" in bot_config and bot_config["proxy_pool"]:
+                return random.choice(bot_config["proxy_pool"])
+
+        # If not found and we have a base name, try with the base name
+        elif base_name and base_name in proxies:
+            bot_config = proxies[base_name]
+
+            # Return a random proxy from the pool if available
+            if "proxy_pool" in bot_config and bot_config["proxy_pool"]:
+                return random.choice(bot_config["proxy_pool"])
+            # Otherwise return static proxy if configured
+            elif "proxy" in bot_config:
+                return bot_config["proxy"]
+
+        # If nothing found, try to use 'google_bot' as fallback
+        elif "google_bot" in proxies:
+            bot_config = proxies["google_bot"]
+
+            if "proxy_pool" in bot_config and bot_config["proxy_pool"]:
+                return random.choice(bot_config["proxy_pool"])
+            elif "proxy" in bot_config:
+                return bot_config["proxy"]
+
+        raise KeyError(f"No valid proxy configuration found for bot '{bot_name}'")
 
     def create_proxy_extension(self, proxy_url: str, output_path: str = None) -> str:
         """
