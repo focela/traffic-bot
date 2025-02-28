@@ -1,0 +1,27 @@
+{
+  "adsense_bot": {
+    "proxy": "http://username:password@static-residential-proxy.com:port"
+  },
+  "google_bot": {
+    "proxy_pool": [
+      "gate.smartproxy.com:10001:spxuasi28c:sss4puQRo1xG75aXc+",
+      "gate.smartproxy.com:10002:spxuasi28c:sss4puQRo1xG75aXc+",
+      "gate.smartproxy.com:10003:spxuasi28c:sss4puQRo1xG75aXc+",
+      "gate.smartproxy.com:10004:spxuasi28c:sss4puQRo1xG75aXc+",
+      "gate.smartproxy.com:10005:spxuasi28c:sss4puQRo1xG75aXc+",
+      "gate.smartproxy.com:10006:spxuasi28c:sss4puQRo1xG75aXc+",
+      "gate.smartproxy.com:10007:spxuasi28c:sss4puQRo1xG75aXc+",
+      "gate.smartproxy.com:10008:spxuasi28c:sss4puQRo1xG75aXc+",
+      "gate.smartproxy.com:10009:spxuasi28c:sss4puQRo1xG75aXc+",
+      "gate.smartproxy.com:10010:spxuasi28c:sss4puQRo1xG75aXc+"
+    ]
+  },
+  "referral_bot": {
+    "proxy_pool": [
+      "http://username:password@proxy3.com",
+      "http://username:password@proxy4.com"
+    ]
+  },
+  "proxies": {
+  }
+}
