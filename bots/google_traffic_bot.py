@@ -401,7 +401,7 @@ def run(config: Optional[Dict[str, Any]] = None, bot_config: Optional[Dict[str, 
         log_message(f"google_bot_{bot_id}", "Setting up Chrome WebDriver...")
 
         # Get proxy and create authentication extension
-        proxy = get_proxy(proxy_name)
+        proxy = get_proxy()
         proxy_extension_path = create_proxy_extension(proxy)
 
         # Log the proxy being used

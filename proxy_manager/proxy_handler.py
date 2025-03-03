@@ -1,75 +1,83 @@
 """
 Proxy Handler Module - Manages proxy configuration for web automation.
 
-This module provides functionalities to load proxy configurations from a JSON file,
-select appropriate proxies based on bot names, and create Chrome extensions for proxy authentication.
+This module provides functionalities to load proxy configurations from a TXT file,
+select random proxies, and create Chrome extensions for proxy authentication.
 """
 
-import json
 import os
 import random
 import urllib.parse
 import zipfile
-from typing import Dict, Union, List, Optional
+from typing import Dict, List, Optional
 
 
 class ProxyHandler:
     """Handles proxy configuration and management for web automation bots."""
 
-    def __init__(self, proxy_config_path: str = "configs/proxies.json"):
+    def __init__(self, proxy_file_path: str = "configs/proxy.txt"):
         """
         Initialize the ProxyHandler with a path to proxy configuration.
 
         Args:
-            proxy_config_path: Path to the JSON file containing proxy configurations
+            proxy_file_path: Path to the TXT file containing proxy configurations
         """
-        self.proxy_config_path = proxy_config_path
+        self.proxy_file_path = proxy_file_path
         self.proxies = None
 
-    def load_proxies(self) -> Dict:
+    def load_proxies(self) -> List[str]:
         """
-        Load proxy configurations from the JSON file.
+        Load proxy configurations from a text file.
+        Expected format: hostname:port:username:password in each line
 
         Returns:
-            Dictionary containing proxy configurations for different bots
+            List of proxy URLs
         """
         if self.proxies is None:
+            proxy_list = []
+
             try:
-                with open(self.proxy_config_path, "r") as file:
-                    self.proxies = json.load(file)
-            except (FileNotFoundError, json.JSONDecodeError) as e:
+                with open(self.proxy_file_path, "r") as file:
+                    for line in file:
+                        line = line.strip()
+                        if not line:
+                            continue
+
+                        parts = line.split(':')
+                        if len(parts) >= 4:
+                            hostname = parts[0]
+                            port = parts[1]
+                            username = parts[2]
+                            # Join remaining parts with ':' in case password contains colons
+                            password = ':'.join(parts[3:])
+
+                            # Create proxy URL
+                            proxy_url = f"http://{username}:{password}@{hostname}:{port}"
+                            proxy_list.append(proxy_url)
+
+                self.proxies = proxy_list
+
+            except FileNotFoundError as e:
                 raise Exception(f"Failed to load proxy configuration: {str(e)}")
 
         return self.proxies
 
-    def get_proxy(self, bot_name: str) -> str:
+    def get_proxy(self) -> str:
         """
-        Get a proxy URL for the specified bot.
-
-        Args:
-            bot_name: Name of the bot to get proxy for
+        Get a random proxy URL from the loaded proxies.
 
         Returns:
             Proxy URL string
 
         Raises:
-            KeyError: If the bot name is not found in the configuration
+            ValueError: If no proxies are available
         """
         proxies = self.load_proxies()
 
-        if bot_name not in proxies:
-            raise KeyError(f"Bot name '{bot_name}' not found in proxy configuration")
+        if not proxies:
+            raise ValueError("No proxies available in the configuration file")
 
-        bot_config = proxies[bot_name]
-
-        # Return static proxy if configured
-        if "proxy" in bot_config:
-            return bot_config["proxy"]
-        # Otherwise return a random proxy from the pool
-        elif "proxy_pool" in bot_config and bot_config["proxy_pool"]:
-            return random.choice(bot_config["proxy_pool"])
-        else:
-            raise ValueError(f"No valid proxy configuration found for bot '{bot_name}'")
+        return random.choice(proxies)
 
     def create_proxy_extension(self, proxy_url: str, output_path: str = None) -> str:
         """
@@ -148,31 +156,28 @@ chrome.webRequest.onAuthRequired.addListener(
         return plugin_file
 
 
-# For backwards compatibility
+# Global instance for convenience
 proxy_handler = ProxyHandler()
 
 
-def load_proxies() -> Dict:
+def load_proxies() -> List[str]:
     """
-    Load proxy configurations from the default JSON file.
+    Load proxy configurations from the default TXT file.
 
     Returns:
-        Dictionary containing proxy configurations
+        List of proxy URLs
     """
     return proxy_handler.load_proxies()
 
 
-def get_proxy(bot_name: str) -> str:
+def get_proxy() -> str:
     """
-    Get a proxy URL for the specified bot.
-
-    Args:
-        bot_name: Name of the bot to get proxy for
+    Get a random proxy from the default configuration.
 
     Returns:
         Proxy URL string
     """
-    return proxy_handler.get_proxy(bot_name)
+    return proxy_handler.get_proxy()
 
 
 def create_proxy_extension(proxy_url: str, output_path: str = None) -> str:
@@ -187,3 +192,18 @@ def create_proxy_extension(proxy_url: str, output_path: str = None) -> str:
         Path to the created proxy extension zip file
     """
     return proxy_handler.create_proxy_extension(proxy_url, output_path)
+
+
+def init_proxy_handler(proxy_file_path: str) -> ProxyHandler:
+    """
+    Initialize the global proxy handler with a specific TXT file.
+
+    Args:
+        proxy_file_path: Path to the TXT file containing proxy configurations
+
+    Returns:
+        ProxyHandler instance
+    """
+    global proxy_handler
+    proxy_handler = ProxyHandler(proxy_file_path)
+    return proxy_handler
